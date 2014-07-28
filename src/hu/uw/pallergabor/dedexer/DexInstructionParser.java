@@ -152,8 +152,9 @@ public class DexInstructionParser extends DexParser {
                
                 instrText.append(" ");
                 String sproto = dexMethodIdsBlock.getSProto( methodidx );
+                
                
-                instrText.append( sproto.substring( sproto.indexOf( '(' ) + 1, sproto.indexOf( ')' ) ) );
+                instrText.append( sproto.substring( sproto.indexOf( '(' ), sproto.length()) );
                 //instrText.append( " ; "+proto );
                 affectedRegisters = getAffectedRegistersForRegList( 
                             registerList,
@@ -208,7 +209,8 @@ public class DexInstructionParser extends DexParser {
                 instrText.append( dexMethodIdsBlock.getMethod( methodidx ) );
                 instrText.append(" ");
                 String sproto = dexMethodIdsBlock.getSProto( methodidx );
-                instrText.append( sproto.substring( sproto.indexOf( '(' ) + 1, sproto.indexOf( ')' ) ) );
+                instrText.append( sproto.substring( sproto.indexOf( '(' ), sproto.length()) );
+                //instrText.append( sproto.substring( sproto.indexOf( '(' ) + 1, sproto.indexOf( ')' ) ) );
                 //instrText.append( " ; "+proto );
                 affectedRegisters = getAffectedRegistersForRegList( 
                             registerList,
