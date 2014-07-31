@@ -59,37 +59,19 @@ public class SExpStyleCodeGenerator implements CodeGenerator {
         Object initializer = dexClassDefsBlock.getStaticFieldInitializer( classidx,i );
         String initializerString = "";
         if( initializer != null ) {
-          if( initializer instanceof Integer ) {    
-            Integer iv = (Integer)initializer;  
-            /*initializerString = " = "+iv.toString()+"\t; 0x"+
-                Integer.toHexString( iv.intValue() );*/
-            
-            initializerString = " " + iv.toString() + ")"+ "; 0x" +
-            Integer.toHexString( iv.intValue() );
-            
-            
-          } else
-            if( initializer instanceof Long ) {
-              Long lv = (Long)initializer;
-              /*initializerString = " = "+lv.toString()+"\t; 0x"+
-                  Long.toHexString( lv.longValue() );*/
-              
-              initializerString = " " + lv.toString() + ")"+ "; 0x" +
-              Integer.toHexString( lv.intValue() );
-              
-            }
-            
-            else
              //initializerString = " = "+initializer.toString();
             	//System.out.println("--------------");
             	//System.out.println(initializer.toString());
            		//System.out.println(initializer.getClass());
-            	initializerString = " "+initializer.toString();
+            	initializerString = initializer.toString();
+            	if(initializerString.charAt(0) != '\"') 
+            		initializerString = "\"" + initializerString + "\"";
         }
+        else initializerString = "";
         
         ps.println( " (field "+
             dexClassDefsBlock.getStaticField( classidx, i )+
-            initializerString + " )");
+            " " + initializerString + " )");
         
         String shortFieldName = 
             dexClassDefsBlock.getStaticFieldShortName( classidx, i );
