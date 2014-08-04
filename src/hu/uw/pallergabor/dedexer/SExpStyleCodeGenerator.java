@@ -193,7 +193,7 @@ public class SExpStyleCodeGenerator implements CodeGenerator {
   }
 
   // CodeGenerator
-  private HashSet<String> printedLabel;
+  private static HashSet<String> printedLabel = new HashSet<String>();
   public void renderLabel( String label ) throws IOException {
 	if(printedLabel.contains(label)) return;
     currentOutput.println( "  (label "+label+")" );
