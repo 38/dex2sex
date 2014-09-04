@@ -700,33 +700,37 @@ public class DexInstructionParser extends DexParser {
             break;
 
             case FILLEDARRAY_RANGE: {
-                int regno = read8Bit();
-                int typeidx = read16Bit();
-                int rangestart = read16Bit();
-                int rangeend = rangestart + regno - 1;
-                if( regno == 1 )
-                    instrText.append( "{v"+
-                                rangestart+
-                                "}" );
-                else
-                    instrText.append( "{v"+
-                                    rangestart+
-                                    " .. v"+
-                                    rangeend+
-                                    "}" );
+            	/* we do a code transformation here */
+            	int regno = read8Bit();
+            	int typeidx = read16Bit();
+            	int rangestart = read16Bit();
+            	int rangeend = rangestart + regno - 1;
+            	instrText = new StringBuilder();
+            	instrText.append("_invoke-v" + regno +  "-static/range ");
+            	if(regno == 1)
+            	{
+            		instrText.append("{v" + rangestart + "}");
+            	}
+            	else
+            	{
+            		instrText.append("{v" + rangestart + " .. v" + rangeend + "}");
+            	}
+            	instrText.append(" java/lang/Array/<-!new-array-filled!-> (");
                 affectedRegisters = new int[ regno ];
                 for( int i = 0 ; i < regno ; ++i )
                     affectedRegisters[i] = rangestart + i;
                 String arrayType = dexTypeIdsBlock.getType( typeidx );
-                instrText.append( " " + SExpHelpers.LTypeToSXType( arrayType ) );
-                regMap.put( REGMAP_RESULT_KEY,
-                        convertJavaTypeToInternal( arrayType ) );
+                arrayType = SExpHelpers.LTypeToSXType( arrayType );
+                for(int i = rangestart; i <= rangeend; i ++)
+                	instrText.append(arrayType + " ");
+                instrText.append(") [object java/lang/Array]");
             }
             break;
 
 // The instruction is followed by one byte storing the target and size registers
 // in lower and higher 4 bits then a 16-bit value is the type index
             case NEWARRAY: {
+            	/* code transformation here */
                 int regs = read8Bit();
                 int typeidx = read16Bit();
                 int targetreg = regs & 0xF;
@@ -736,12 +740,19 @@ public class DexInstructionParser extends DexParser {
                 affectedRegisters = new int[2];
                 affectedRegisters[0] = targetreg;
                 affectedRegisters[1] = sizereg;
-                instrText.append( "v"+
+                String type = SExpHelpers.LTypeToSXType( arrayType );
+                instrText = new StringBuilder();
+                instrText.append(
+                		"_invoke-v" + targetreg + "-static " +
+                		"{v" + sizereg + " v" + sizereg + "} "+
+                		"java/lang/Array/<-!new-array-empty!-> (int " + type + 
+                		")[object java/lang/Array]" );
+                /*instrText.append( "v"+
                             targetreg+
                             " v"+
                             sizereg+
                             " "+
-                            SExpHelpers.LTypeToSXType( arrayType ) );
+                            SExpHelpers.LTypeToSXType( arrayType ) );*/
                 
             }
             break;
@@ -749,6 +760,7 @@ public class DexInstructionParser extends DexParser {
 // The instruction is followed by a register and a 32-bit signed offset that
 // points to the static array data used to fill the array
             case FILLARRAYDATA: {
+            	//TODO: eliminate this
                 int reg = read8Bit();
                 int offset = readSigned32Bit();
                 long target = instrBase + ( (long)offset * 2L );
@@ -985,7 +997,9 @@ public class DexInstructionParser extends DexParser {
                 int reg1 = read8Bit();
                 int reg2 = read8Bit();
                 int reg3 = read8Bit();
-                instrText.append( "v"+reg1+" v"+reg2+" v"+reg3 );
+                //instrText.append( "v"+reg1+" v"+reg2+" v"+reg3 );
+                instrText = new StringBuilder();
+          
                 affectedRegisters = new int[3];
                 affectedRegisters[0] = reg1;
                 affectedRegisters[1] = reg2;
@@ -994,6 +1008,10 @@ public class DexInstructionParser extends DexParser {
                 String elementType = TYPE_UNKNOWN;
                 if( ( arrayType != null ) && arrayType.startsWith( "[" ) )
                     elementType = convertJavaTypeToInternal( arrayType.substring( 1 ) );
+                instrText.append("_invoke-v" + reg1 + "-static {v" +
+                		reg2 + " v" + reg3 + "} java/lang/Array/<-!aget-!> ([object java/lang/Array] int) " +
+                		elementType
+                );
                 regMap.put( new Integer( reg1 ),elementType );
             }
             break;
@@ -1009,6 +1027,9 @@ public class DexInstructionParser extends DexParser {
                 affectedRegisters[0] = reg1;
                 affectedRegisters[1] = reg2;
                 affectedRegisters[2] = reg3;
+                instrText.append("_invoke-v" + reg1 + "-static {v" +
+                		reg2 + " v" + reg3 + "} java/lang/Array/<-!aget-!> (int int) void"
+                );
             }
             break;
 
@@ -1220,7 +1241,16 @@ public class DexInstructionParser extends DexParser {
                 int b1 = read8Bit();
                 int reg1 = b1 & 0xF;
                 int reg2 = ( b1 & 0xF0 ) >> 4;
-                instrText.append( "v"+reg1+" v"+reg2 );
+                if(instrCode != 0x21)
+                {
+                	instrText.append( "v"+reg1+" v"+reg2 );
+                }
+                else
+                {
+                	instrText = new StringBuilder();
+                	instrText.append("_invoke-v" + reg1 + "-static {v" + reg2 + "} "
+                			         + "java/lang/Array/<-!array-length!-> ([object java/lang/Array]) int");
+                }
                 affectedRegisters = new int[2];
                 affectedRegisters[0] = reg1;
                 affectedRegisters[1] = reg2;
