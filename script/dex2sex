@@ -13,6 +13,6 @@ ${JAVA} -jar ${JAR} -d ${OUTPUT} ${TMPDIR}/classes.dex
 rm ${TMPDIR}/classes.dex
 for i in `find ${OUTPUT} -name '*.sxddx'`
 do
-    sed 's/\[array .*\]\//array\//g' $i > ${TMPDIR}/tmp.txt
+    sed 's/\[array .*\]\//java\/lang\/reflect\/Array\//g' $i > ${TMPDIR}/tmp.txt
     mv ${TMPDIR}/tmp.txt $i
 done

@@ -24,7 +24,9 @@ public class DexMethodIdsBlock extends DexParser {
             if (clazzName.endsWith(";")) { //this is not enough to escape class method!
             	//clazzName = clazzName.substring(0, clazzName.length() - 1);
             	clazzName = SExpHelpers.LTypeToSXType(clazzName);
+            	
             }
+
             b.append( clazzName ); 
             
             b.append( '/' );

@@ -744,17 +744,17 @@ public class DexInstructionParser extends DexParser {
                 int targetreg = regs & 0xF;
                 int sizereg = ( regs & 0xF0 ) >> 4;
                 String arrayType = dexTypeIdsBlock.getType( typeidx );
-                arrayType = SExpHelpers.LTypeToSXType(arrayType.startsWith("[")?arrayType.substring((1)):arrayType);
                 regMap.put( new Integer( targetreg ),arrayType );
+                arrayType = SExpHelpers.LTypeToSXType(arrayType.startsWith("[")?arrayType.substring((1)):arrayType);
                 affectedRegisters = new int[2];
                 affectedRegisters[0] = targetreg;
                 affectedRegisters[1] = sizereg;
-                String type = SExpHelpers.LTypeToSXType( arrayType );
+                //String type = SExpHelpers.LTypeToSXType( arrayType );
                 instrText = new StringBuilder();
                 instrText.append(
                 		"_invoke-v" + targetreg + "-static " +
                 		"{v" + sizereg + " v" + sizereg + "} "+
-                		"java/lang/reflect/Array/<new_array> (int " + type + 
+                		"java/lang/reflect/Array/<new_array> (int " + arrayType + 
                 		")[object java/lang/reflect/Array]" );
                 /*instrText.append( "v"+
                             targetreg+
