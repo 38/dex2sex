@@ -465,7 +465,9 @@ public class DexInstructionParser extends DexParser {
                 if( ( byteCounter % 2 ) != 0 )
                     read8Bit();         // Align to 16 bit
                 instrText.append( "} java/lang/reflect/Array/<filled_new_array>" );
-                String arrayType = dexTypeIdsBlock.getType( typeidx ).substring(1);
+                String arrayType = dexTypeIdsBlock.getType( typeidx );
+                arrayType = SExpHelpers.LTypeToSXType(arrayType.startsWith("[")?arrayType.substring((1)):arrayType);
+                
                 instrText.append(" (");
                 for(int i = 0; i < regno + (lastreg >= 0?1:0); i ++)
                 	instrText.append( SExpHelpers.LTypeToSXType( arrayType ) + " " );
@@ -725,6 +727,7 @@ public class DexInstructionParser extends DexParser {
                 for( int i = 0 ; i < regno ; ++i )
                     affectedRegisters[i] = rangestart + i;
                 String arrayType = dexTypeIdsBlock.getType( typeidx ).substring(1);
+                arrayType = SExpHelpers.LTypeToSXType(arrayType.startsWith("[")?arrayType.substring((1)):arrayType);
                 arrayType = SExpHelpers.LTypeToSXType( arrayType );
                 for(int i = rangestart; i <= rangeend; i ++)
                 	instrText.append(arrayType + " ");
@@ -740,7 +743,8 @@ public class DexInstructionParser extends DexParser {
                 int typeidx = read16Bit();
                 int targetreg = regs & 0xF;
                 int sizereg = ( regs & 0xF0 ) >> 4;
-                String arrayType = dexTypeIdsBlock.getType( typeidx ).substring(1);
+                String arrayType = dexTypeIdsBlock.getType( typeidx );
+                arrayType = SExpHelpers.LTypeToSXType(arrayType.startsWith("[")?arrayType.substring((1)):arrayType);
                 regMap.put( new Integer( targetreg ),arrayType );
                 affectedRegisters = new int[2];
                 affectedRegisters[0] = targetreg;
@@ -1016,7 +1020,7 @@ public class DexInstructionParser extends DexParser {
                 instrText = new StringBuilder();
                 instrText.append("_invoke-v" + reg1 + "-static {v" +
                 		reg2 + " v" + reg3 + "} java/lang/reflect/Array/<array_get> ([object java/lang/reflect/Array] int) " +
-                		elementType
+                		SExpHelpers.LTypeToSXType(arrayType.startsWith("[")?arrayType.substring((1)):arrayType)
                 );
                 regMap.put( new Integer( reg1 ),elementType );
             }
