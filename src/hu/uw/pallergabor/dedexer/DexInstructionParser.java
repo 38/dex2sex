@@ -439,7 +439,9 @@ public class DexInstructionParser extends DexParser {
                     lastreg = b2 & 0x0F;
                 }
                 int typeidx = read16Bit();
-                instrText.append( "{" );
+                instrText = new StringBuilder();
+                //instrText.append( "{" );
+                instrText.append("invoke-static {");
                 int regByte = 0;
                 int byteCounter = 0;
                 affectedRegisters = new int[ regno ];
@@ -453,7 +455,7 @@ public class DexInstructionParser extends DexParser {
                         reg = regByte & 0x0F;
                     } else
                         reg = ( regByte & 0xF0 ) >> 4;
-                    instrText.append( "v"+reg );
+                    instrText.append( "v"+reg);
                     affectedRegisters[ i ] = reg;
                 }
                 if( lastreg >= 0 ) {
@@ -462,9 +464,12 @@ public class DexInstructionParser extends DexParser {
                 }
                 if( ( byteCounter % 2 ) != 0 )
                     read8Bit();         // Align to 16 bit
-                instrText.append( "} " );
-                String arrayType = dexTypeIdsBlock.getType( typeidx );
-                instrText.append( SExpHelpers.LTypeToSXType( arrayType ) );
+                instrText.append( "} java/lang/reflect/Array/<filled_new_array>" );
+                String arrayType = dexTypeIdsBlock.getType( typeidx ).substring(1);
+                instrText.append(" (");
+                for(int i = 0; i < regno + (lastreg >= 0?1:0); i ++)
+                	instrText.append( SExpHelpers.LTypeToSXType( arrayType ) + " " );
+                instrText.append(") [object java/lang/reflect/Array]");
                 regMap.put( REGMAP_RESULT_KEY,
                         convertJavaTypeToInternal( arrayType ) );
             }
@@ -706,7 +711,7 @@ public class DexInstructionParser extends DexParser {
             	int rangestart = read16Bit();
             	int rangeend = rangestart + regno - 1;
             	instrText = new StringBuilder();
-            	instrText.append("_invoke-v" + regno +  "-static/range ");
+            	instrText.append("invoke-static/range ");
             	if(regno == 1)
             	{
             		instrText.append("{v" + rangestart + "}");
@@ -715,15 +720,15 @@ public class DexInstructionParser extends DexParser {
             	{
             		instrText.append("{v" + rangestart + " .. v" + rangeend + "}");
             	}
-            	instrText.append(" java/lang/Array/<-!new-array-filled!-> (");
+            	instrText.append(" java/lang/reflect/Array/<filled_new_array> (");
                 affectedRegisters = new int[ regno ];
                 for( int i = 0 ; i < regno ; ++i )
                     affectedRegisters[i] = rangestart + i;
-                String arrayType = dexTypeIdsBlock.getType( typeidx );
+                String arrayType = dexTypeIdsBlock.getType( typeidx ).substring(1);
                 arrayType = SExpHelpers.LTypeToSXType( arrayType );
                 for(int i = rangestart; i <= rangeend; i ++)
                 	instrText.append(arrayType + " ");
-                instrText.append(") [object java/lang/Array]");
+                instrText.append(") [object java/lang/reflect/Array]");
             }
             break;
 
@@ -735,7 +740,7 @@ public class DexInstructionParser extends DexParser {
                 int typeidx = read16Bit();
                 int targetreg = regs & 0xF;
                 int sizereg = ( regs & 0xF0 ) >> 4;
-                String arrayType = dexTypeIdsBlock.getType( typeidx );
+                String arrayType = dexTypeIdsBlock.getType( typeidx ).substring(1);
                 regMap.put( new Integer( targetreg ),arrayType );
                 affectedRegisters = new int[2];
                 affectedRegisters[0] = targetreg;
@@ -745,8 +750,8 @@ public class DexInstructionParser extends DexParser {
                 instrText.append(
                 		"_invoke-v" + targetreg + "-static " +
                 		"{v" + sizereg + " v" + sizereg + "} "+
-                		"java/lang/Array/<-!new-array-empty!-> (int " + type + 
-                		")[object java/lang/Array]" );
+                		"java/lang/reflect/Array/<new_array> (int " + type + 
+                		")[object java/lang/reflect/Array]" );
                 /*instrText.append( "v"+
                             targetreg+
                             " v"+
@@ -760,14 +765,14 @@ public class DexInstructionParser extends DexParser {
 // The instruction is followed by a register and a 32-bit signed offset that
 // points to the static array data used to fill the array
             case FILLARRAYDATA: {
-            	//TODO: eliminate this
                 int reg = read8Bit();
                 int offset = readSigned32Bit();
                 long target = instrBase + ( (long)offset * 2L );
-                instrText.append( "v"+
+                instrText = new StringBuilder();
+                instrText.append( "invoke-static {v"+
                         reg+
-                        " "+
-                        "l"+Long.toHexString( target ) );
+                        "} java/lang/reflect/Array/<fill_array_data> "+
+                        "([object <adam_label>/l"+Long.toHexString( target ) + "]) void" );
                // System.out.println(instrText);
                 affectedRegisters = new int[1];
                 affectedRegisters[0] = reg;
@@ -1008,8 +1013,9 @@ public class DexInstructionParser extends DexParser {
                 String elementType = TYPE_UNKNOWN;
                 if( ( arrayType != null ) && arrayType.startsWith( "[" ) )
                     elementType = convertJavaTypeToInternal( arrayType.substring( 1 ) );
+                instrText = new StringBuilder();
                 instrText.append("_invoke-v" + reg1 + "-static {v" +
-                		reg2 + " v" + reg3 + "} java/lang/Array/<-!aget-!> ([object java/lang/Array] int) " +
+                		reg2 + " v" + reg3 + "} java/lang/reflect/Array/<array_get> ([object java/lang/reflect/Array] int) " +
                 		elementType
                 );
                 regMap.put( new Integer( reg1 ),elementType );
@@ -1027,8 +1033,9 @@ public class DexInstructionParser extends DexParser {
                 affectedRegisters[0] = reg1;
                 affectedRegisters[1] = reg2;
                 affectedRegisters[2] = reg3;
-                instrText.append("_invoke-v" + reg1 + "-static {v" +
-                		reg2 + " v" + reg3 + "} java/lang/Array/<-!aget-!> (int int) void"
+                instrText = new StringBuilder();
+                instrText.append("invoke-static {v" + reg1 + " v" +
+                		reg2 + " v" + reg3 + "} java/lang/reflect/Array/<array_put> (int int) void"
                 );
             }
             break;
@@ -1249,7 +1256,7 @@ public class DexInstructionParser extends DexParser {
                 {
                 	instrText = new StringBuilder();
                 	instrText.append("_invoke-v" + reg1 + "-static {v" + reg2 + "} "
-                			         + "java/lang/Array/<-!array-length!-> ([object java/lang/Array]) int");
+                			         + "java/lang/reflect/Array/<array_length> ([object java/lang/reflect/Array]) int");
                 }
                 affectedRegisters = new int[2];
                 affectedRegisters[0] = reg1;
