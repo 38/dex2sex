@@ -1,0 +1,50 @@
+#!/bin/sh
+if [ $# -eq 0 ]; then
+	echo "Disassemble a signle java file to S-Expression Represented Dalivk Bytecode" >&1
+	echo "Usage: $0 filename.java [outputdir]" >&1
+	echo "This command will compile and disassemble file and produce the output to ouputdir, if outputdir is omitted the output will produced in current working directory" >&1
+	exit 1
+fi
+
+[ -z ${2} ] && BASEDIR=. || BASEDIR=$2
+JAVA=java
+JAVAC=javac
+JAR=`dirname $0`/../bin/dex2sex.jar
+DX=`dirname $0`/../bin/dx
+JAVA_FILE=${1}
+OUTPUT=${BASEDIR}
+PREFIX=`basename ${JAVA_FILE} .java`
+TMPDIR=/tmp/dex2sex
+
+mkdir -p ${TMPDIR}/build
+rm -rf ${TMPDIR}/build/*
+if ${JAVAC} -target 1.6 -source 1.6 -d ${TMPDIR}/build/ ${JAVA_FILE}; then
+	echo >/dev/null
+else
+	echo "Java compiler returns an error" >&1
+	exit 1
+fi
+PREV_PWD=`pwd`
+cd ${TMPDIR}/build
+if ${DX} --dex --output=${TMPDIR}/${PREFIX}.dex *.class; then
+	echo >/dev/null
+else
+	rm -rf ${TMPDIR}/build
+	echo "Can not build .dex file from the class" >&1
+	exit 1
+fi
+cd ${PREV_PWD}
+if ${JAVA} -jar ${JAR} -d ${OUTPUT} ${TMPDIR}/${PREFIX}.dex; then
+	echo >/dev/null
+else
+	rm -rf ${TMPDIR}/build ${TMPDIR}/${PREFIX}.dex
+	echo "Can not disassemble .dex file" >&1
+	exit 1
+fi
+rm -rf ${TMPDIR}/${PREFIX}.dex ${TMPDIR}/build
+
+for i in `find ${OUTPUT} -name '*.sxddx'`
+do
+    sed 's/\[array .*\]\//java\/lang\/reflect\/Array\//g' $i > ${TMPDIR}/tmp.txt
+    mv ${TMPDIR}/tmp.txt $i
+done
