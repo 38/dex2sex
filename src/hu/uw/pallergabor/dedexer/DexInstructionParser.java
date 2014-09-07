@@ -6,6 +6,8 @@ package hu.uw.pallergabor.dedexer;
 import java.io.IOException;
 import java.util.*;
 
+import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
+
 public class DexInstructionParser extends DexParser {
     public enum ForkStatus {
         CONTINUE,
@@ -22,7 +24,12 @@ public class DexInstructionParser extends DexParser {
     public static final String TYPE_SINGLE_LENGTH = "single-length";
     public static final String TYPE_DOUBLE_LENGTH = "double-length";
     public static final String TYPE_UNKNOWN = "unknown";
-
+    public static long toSigned(long value, int width){
+    	if((value & (1l << (width - 1))) != 0){
+    		return value - (1l << width);
+    	}
+    	else return value;
+    }
     public void initializePass( boolean secondPass ) {
         this.secondPass = secondPass;
         tasks.clear();
@@ -57,7 +64,7 @@ public class DexInstructionParser extends DexParser {
                 int constant = ( b1 & 0xF0 ) >> 4;
                 instrText.append( "v"+reg );
                 instrText.append( " " );
-                instrText.append( constant );
+                instrText.append( toSigned(constant, 4) );
 // Moves integer to reg
                 affectedRegisters = new int[1];
                 affectedRegisters[0] = reg;
@@ -953,7 +960,7 @@ public class DexInstructionParser extends DexParser {
                 affectedRegisters = new int[1];
                 affectedRegisters[0] = targetreg;
                 instrText.append( "v"+targetreg+" "+
-                                Integer.toString( constant ) );
+                                toSigned(constant, 16) );
                 regMap.put( new Integer( targetreg ),TYPE_SINGLE_LENGTH );
             }
             break;
@@ -966,7 +973,7 @@ public class DexInstructionParser extends DexParser {
                 affectedRegisters = new int[1];
                 affectedRegisters[0] = targetreg;
                 instrText.append( "v"+targetreg+" "+
-                                Integer.toString( constant ) );
+                                toSigned(constant ,16) );
                 regMap.put( new Integer( targetreg ),TYPE_DOUBLE_LENGTH );
             }
             break;
@@ -1293,7 +1300,7 @@ public class DexInstructionParser extends DexParser {
                 affectedRegisters[0] = reg1;
                 affectedRegisters[1] = reg2;
                 regMap.put( new Integer( reg1 ),TYPE_SINGLE_LENGTH );
-                instrText.append( "v"+reg1+" v"+reg2+" "+constant );
+                instrText.append( "v"+reg1+" v"+reg2+" "+ toSigned(constant, 8) );
             }
             break;
 
@@ -1319,7 +1326,7 @@ public class DexInstructionParser extends DexParser {
                                     reg+
                                     " "+
                                     //constant+ 
-                                    constant+ ")" + 
+                                    toSigned(constant, 32) + ")" + 
                                     " ; 0x"+
                                     Long.toHexString( constant ) );
                 affectedRegisters = new int[1];
@@ -1335,7 +1342,7 @@ public class DexInstructionParser extends DexParser {
                                     reg+
                                     " "+
                                   //constant+ 
-                                    constant+ ")" + 
+                                    toSigned(constant, 32) + ")" + 
                                     " ; 0x"+
                                     Long.toHexString( constant ) );
                 affectedRegisters = new int[1];
@@ -1398,7 +1405,7 @@ public class DexInstructionParser extends DexParser {
                 int constant = read16Bit();
                 instrText.append( "v"+reg1+
                                     " v"+reg2+
-                                    " "+constant );
+                                    " "+ toSigned(constant, 16) );
                 affectedRegisters = new int[2];
                 affectedRegisters[0] = reg1;
                 affectedRegisters[1] = reg2;
