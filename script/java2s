@@ -11,22 +11,28 @@ JAVA=java
 JAVAC=javac
 JAR=`dirname $0`/../bin/dex2sex.jar
 DX=`dirname $0`/../bin/dx
-JAVA_FILE=${1}
+SOURCE=${1}
 OUTPUT=${BASEDIR}
-PREFIX=`basename ${JAVA_FILE} .java`
+PREFIX=`basename ${SOURCE} .java`
 TMPDIR=/tmp/dex2sex
+
+if [ -z "`echo ${DX}|grep '^/'`" ]; then
+	DX=`pwd`/${DX}
+fi
 
 mkdir -p ${TMPDIR}/build
 rm -rf ${TMPDIR}/build/*
-if ${JAVAC} -target 1.6 -source 1.6 -d ${TMPDIR}/build/ ${JAVA_FILE}; then
+find ${SOURCE} -name "*.java" -and -type f > ${TMPDIR}/build/sources.list
+if ${JAVAC} -target 1.6 -source 1.6 -d ${TMPDIR}/build/ @${TMPDIR}/build/sources.list 2> ${TMPDIR}/build/build.log; then
 	echo >/dev/null
 else
-	echo "Java compiler returns an error" >&1
+	cat ${TMPDIR}/build/build.log >&1
 	exit 1
 fi
 PREV_PWD=`pwd`
 cd ${TMPDIR}/build
-if ${DX} --dex --output=${TMPDIR}/${PREFIX}.dex *.class; then
+find . -name '*.class' > ${TMPDIR}/build/classes.list
+if ${DX} --dex --output=${TMPDIR}/${PREFIX}.dex `cat ${TMPDIR}/build/classes.list`; then
 	echo >/dev/null
 else
 	rm -rf ${TMPDIR}/build
@@ -41,10 +47,11 @@ else
 	echo "Can not disassemble .dex file" >&1
 	exit 1
 fi
-rm -rf ${TMPDIR}/${PREFIX}.dex ${TMPDIR}/build
-
-for i in `find ${OUTPUT} -name '*.sxddx'`
+sed 's/class$/sxddx/g' ${TMPDIR}/build/classes.list > ${TMPDIR}/build/sxddx.list
+for i in `cat ${TMPDIR}/build/sxddx.list`
 do
-    sed 's/\[array .*\]\//java\/lang\/reflect\/Array\//g' $i > ${TMPDIR}/tmp.txt
-    mv ${TMPDIR}/tmp.txt $i
+    sed 's/\[array .*\]\//java\/lang\/reflect\/Array\//g' ${OUTPUT}/${i} > ${TMPDIR}/tmp.txt
+    mv ${TMPDIR}/tmp.txt ${OUTPUT}/${i}
 done
+
+rm -rf ${TMPDIR}/${PREFIX}.dex ${TMPDIR}/build

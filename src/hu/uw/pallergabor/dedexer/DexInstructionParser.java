@@ -1046,7 +1046,7 @@ public class DexInstructionParser extends DexParser {
                 affectedRegisters[2] = reg3;
                 instrText = new StringBuilder();
                 instrText.append("invoke-static {v" + reg1 + " v" +
-                		reg2 + " v" + reg3 + "} java/lang/reflect/Array/<array_put> (int int) void"
+                		reg2 + " v" + reg3 + "} java/lang/reflect/Array/<array_put> (int [object /java/lang/reflect/Array] int) void"
                 );
             }
             break;
