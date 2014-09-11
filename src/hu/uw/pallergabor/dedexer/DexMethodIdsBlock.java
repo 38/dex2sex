@@ -19,7 +19,7 @@ public class DexMethodIdsBlock extends DexParser {
             int nameStringIdx = (int)read32Bit();
             StringBuilder b = new StringBuilder();
 // Class name
-            String clazzName = SExpHelpers.LTypeToSXType(dexTypeIdsBlock.getClassName( classTypeIdx ));	
+            String clazzName = dexTypeIdsBlock.getClassName( classTypeIdx );	
             // 
             if (clazzName.endsWith(";")) { //this is not enough to escape class method!
             	//clazzName = clazzName.substring(0, clazzName.length() - 1);
