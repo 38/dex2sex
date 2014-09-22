@@ -15,6 +15,7 @@ SOURCE=${1}
 OUTPUT=${BASEDIR}
 PREFIX=`basename ${SOURCE} .java`
 TMPDIR=/tmp/dex2sex
+LANDROID=`dirname $0`/../bin/lib/android.jar
 
 if [ -z "`echo ${DX}|grep '^/'`" ]; then
 	DX=`pwd`/${DX}
@@ -23,7 +24,7 @@ fi
 mkdir -p ${TMPDIR}/build
 rm -rf ${TMPDIR}/build/*
 find ${SOURCE} -name "*.java" -and -type f > ${TMPDIR}/build/sources.list
-if ${JAVAC} -target 1.6 -source 1.6 -d ${TMPDIR}/build/ @${TMPDIR}/build/sources.list 2> ${TMPDIR}/build/build.log; then
+if ${JAVAC} -target 1.6 -source 1.6 -cp .:${LANDROID} -d ${TMPDIR}/build/ @${TMPDIR}/build/sources.list 2> ${TMPDIR}/build/build.log; then
 	echo >/dev/null
 else
 	cat ${TMPDIR}/build/build.log >&1
